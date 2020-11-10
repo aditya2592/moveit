@@ -72,6 +72,8 @@
 #include "ompl/base/objectives/MaximizeMinClearanceObjective.h"
 #include <ompl/geometric/planners/prm/LazyPRM.h>
 
+
+bool load_constraints = true;
 namespace ompl_interface
 {
 constexpr char LOGNAME[] = "model_based_planning_context";
@@ -106,7 +108,11 @@ ompl_interface::ModelBasedPlanningContext::ModelBasedPlanningContext(const std::
 
 void ompl_interface::ModelBasedPlanningContext::configure(const ros::NodeHandle& nh, bool use_constraints_approximations)
 {
-  loadConstraintApproximations(nh);
+  if (load_constraints){
+    loadConstraintApproximations(nh);
+    load_constraints=false;
+  }
+
   if (!use_constraints_approximations)
   {
     setConstraintsApproximations(ConstraintsLibraryPtr());
