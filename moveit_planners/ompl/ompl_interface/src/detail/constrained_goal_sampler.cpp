@@ -72,7 +72,7 @@ bool ompl_interface::ConstrainedGoalSampler::checkStateValidity(ob::State* new_g
                                                                 bool verbose) const
 {
   planning_context_->getOMPLStateSpace()->copyToOMPLState(new_goal, state);
-  return static_cast<const StateValidityChecker*>(si_->getStateValidityChecker().get())->isValid(new_goal, verbose);
+  return static_cast<const StateValidityChecker*>(si_->getStateValidityChecker().get())->isValid(new_goal, true, verbose);
 }
 
 bool ompl_interface::ConstrainedGoalSampler::stateValidityCallback(ob::State* new_goal,
@@ -90,6 +90,7 @@ bool ompl_interface::ConstrainedGoalSampler::stateValidityCallback(ob::State* ne
 bool ompl_interface::ConstrainedGoalSampler::sampleUsingConstraintSampler(const ob::GoalLazySamples* gls,
                                                                           ob::State* new_goal)
 {
+  ROS_WARN_NAMED(LOGNAME, "Sample using constrained sampler");
   //  moveit::Profiler::ScopedBlock sblock("ConstrainedGoalSampler::sampleUsingConstraintSampler");
 
   unsigned int max_attempts = planning_context_->getMaximumGoalSamplingAttempts();
@@ -97,20 +98,31 @@ bool ompl_interface::ConstrainedGoalSampler::sampleUsingConstraintSampler(const 
 
   // terminate after too many attempts
   if (attempts_so_far >= max_attempts)
+  {
+    ROS_ERROR_NAMED(LOGNAME, "exceeded max attempts");
     return false;
+  }
 
   // terminate after a maximum number of samples
   if (gls->getStateCount() >= planning_context_->getMaximumGoalSamples())
+  {
+    ROS_ERROR_NAMED(LOGNAME, "exceeded max goal samples");
     return false;
+  }
 
   // terminate the sampling thread when a solution has been found
   if (planning_context_->getOMPLSimpleSetup()->getProblemDefinition()->hasSolution())
+  {
+    ROS_ERROR_NAMED(LOGNAME, "has solution returned false");
     return false;
+  }
 
   unsigned int max_attempts_div2 = max_attempts / 2;
   for (unsigned int a = gls->samplingAttemptsCount(); a < max_attempts && gls->isSampling(); ++a)
   {
     bool verbose = false;
+    if (verbose)
+      ROS_ERROR_NAMED(LOGNAME, "Sampling attempt %d", a);
     if (gls->getStateCount() == 0 && a >= max_attempts_div2)
       if (verbose_display_ < 1)
       {
@@ -139,6 +151,8 @@ bool ompl_interface::ConstrainedGoalSampler::sampleUsingConstraintSampler(const 
         }
         else
         {
+          if (verbose)
+            ROS_ERROR_NAMED(LOGNAME, "kinematic constraints decide failed");
           invalid_sampled_constraints_++;
           if (!warned_invalid_samples_ && invalid_sampled_constraints_ >= (attempts_so_far * 8) / 10)
           {
@@ -149,11 +163,17 @@ bool ompl_interface::ConstrainedGoalSampler::sampleUsingConstraintSampler(const 
           }
         }
       }
+      else
+      {
+        if (verbose)
+          ROS_ERROR_NAMED(LOGNAME, "projection failed");
+      }
+      
     }
     else
     {
       default_sampler_->sampleUniform(new_goal);
-      if (static_cast<const StateValidityChecker*>(si_->getStateValidityChecker().get())->isValid(new_goal, verbose))
+      if (static_cast<const StateValidityChecker*>(si_->getStateValidityChecker().get())->isValid(new_goal, true, verbose))
       {
         planning_context_->getOMPLStateSpace()->copyToRobotState(work_state_, new_goal);
         if (kinematic_constraint_set_->decide(work_state_, verbose).satisfied)
