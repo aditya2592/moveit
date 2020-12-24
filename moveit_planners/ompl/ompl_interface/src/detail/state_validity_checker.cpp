@@ -72,12 +72,25 @@ void ompl_interface::StateValidityChecker::setVerbose(bool flag)
 {
   verbose_ = flag;
 }
-
 bool ompl_interface::StateValidityChecker::isValid(const ompl::base::State* state, bool verbose) const
 {
+  return isValid(state, false, verbose);
+}
+
+bool ompl_interface::StateValidityChecker::isValid(const ompl::base::State* state, bool is_goal, bool verbose) const
+{
+  // ROS_WARN_NAMED(LOGNAME, "Checking state validity, is_goal %d", is_goal);
   // Use cached validity if it is available
+  if (is_goal) 
+  {
+    ROS_WARN_NAMED(LOGNAME, "Checking validity for goal state");
+    verbose = true;
+  }
   if (state->as<ModelBasedStateSpace::StateType>()->isValidityKnown())
+  {
+    // ROS_WARN_NAMED(LOGNAME, "Using cached validity %d", state->as<ModelBasedStateSpace::StateType>()->isMarkedValid());
     return state->as<ModelBasedStateSpace::StateType>()->isMarkedValid();
+  }
 
   if (!si_->satisfiesBounds(state))
   {
@@ -101,14 +114,40 @@ bool ompl_interface::StateValidityChecker::isValid(const ompl::base::State* stat
   // check feasibility
   if (!planning_context_->getPlanningScene()->isStateFeasible(*robot_state, verbose))
   {
+    ROS_ERROR_NAMED(LOGNAME, "State not planning scene feasible");
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markInvalid();
     return false;
   }
+  
+  collision_detection::AllowedCollisionMatrix acm = planning_context_->getPlanningScene()->getAllowedCollisionMatrix();
+  if (is_goal) 
+  {
+    std::vector<const moveit::core::AttachedBody*> attached_bodies;
+    planning_context_->getPlanningScene()->getCurrentState().getAttachedBodies(attached_bodies);
 
+
+  //   acm.setEntry("pack_2_left", "box_picked", true);
+  //   acm.setEntry("pack_2_right", "box_picked", true);
+  //   acm.setEntry("pack_2_back", "box_picked", true);
+  //   acm.setEntry("pack_2_front", "box_picked", true);
+  //   acm.setEntry("box_picked", "pack_2_left", true);
+  //   acm.setEntry("box_picked", "pack_2_right", true);
+  //   acm.setEntry("box_picked", "pack_2_front", true);
+  //   acm.setEntry("box_picked", "pack_2_back", true);
+
+  //   acm.setEntry("pack_0_left", "box_picked", true);
+  //   acm.setEntry("pack_0_right", "box_picked", true);
+  //   acm.setEntry("pack_0_back", "box_picked", true);
+  //   acm.setEntry("pack_0_front", "box_picked", true);
+  //   acm.setEntry("box_picked", "pack_0_left", true);
+  //   acm.setEntry("box_picked", "pack_0_right", true);
+  //   acm.setEntry("box_picked", "pack_0_front", true);
+  //   acm.setEntry("box_picked", "pack_0_back", true);
+  }
   // check collision avoidance
   collision_detection::CollisionResult res;
   planning_context_->getPlanningScene()->checkCollision(
-      verbose ? collision_request_simple_verbose_ : collision_request_simple_, res, *robot_state);
+      verbose ? collision_request_simple_verbose_ : collision_request_simple_, res, *robot_state, acm);
   if (!res.collision)
   {
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markValid();

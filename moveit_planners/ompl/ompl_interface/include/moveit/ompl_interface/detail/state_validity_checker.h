@@ -53,7 +53,7 @@ public:
 
   bool isValid(const ompl::base::State* state) const override
   {
-    return isValid(state, verbose_);
+    return isValid(state, false, verbose_);
   }
 
   bool isValid(const ompl::base::State* state, double& dist) const override
@@ -62,6 +62,7 @@ public:
   }
 
   bool isValid(const ompl::base::State* state, bool verbose) const;
+  bool isValid(const ompl::base::State* state, bool is_goal, bool verbose) const;
   bool isValid(const ompl::base::State* state, double& dist, bool verbose) const;
 
   virtual double cost(const ompl::base::State* state) const;
