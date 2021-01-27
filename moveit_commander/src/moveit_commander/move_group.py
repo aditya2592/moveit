@@ -385,9 +385,17 @@ class MoveGroupCommander(object):
         """ Set the tolerance for a target end-effector position """
         self._g.set_goal_position_tolerance(value)
 
+    def set_goal_position_tolerance_xyz(self, x_tol, y_tol, z_tol):
+        """ Set the tolerance for a target end-effector position """
+        self._g.set_goal_position_tolerance_xyz(x_tol, y_tol, z_tol)
+
     def set_goal_orientation_tolerance(self, value):
         """ Set the tolerance for a target end-effector orientation """
         self._g.set_goal_orientation_tolerance(value)
+
+    def set_goal_orientation_tolerance_rpy(self, r_tol, p_tol, y_tol):
+        """ Set the tolerance for a target end-effector orientation """
+        self._g.set_goal_orientation_tolerance_rpy(r_tol, p_tol, y_tol)
 
     def allow_looking(self, value):
         """ Enable/disable looking around for motion planning """

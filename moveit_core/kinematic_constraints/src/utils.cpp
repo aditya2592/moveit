@@ -188,8 +188,8 @@ moveit_msgs::Constraints constructGoalConstraints(const std::string& link_name, 
   ocm.orientation = pose.pose.orientation;
   ocm.absolute_x_axis_tolerance = tolerance_angle;
   ocm.absolute_y_axis_tolerance = tolerance_angle;
-  // ocm.absolute_z_axis_tolerance = tolerance_angle;
-  ocm.absolute_z_axis_tolerance = 0.05;
+  ocm.absolute_z_axis_tolerance = tolerance_angle;
+  // ocm.absolute_z_axis_tolerance = 0.05;
   ocm.weight = 1.0;
 
   return goal;

@@ -288,8 +288,14 @@ public:
   /** \brief Set the position tolerance that is used for reaching the goal when moving to a pose. */
   void setGoalPositionTolerance(double tolerance);
 
+  /** \brief Set the position tolerance along each axis that is used for reaching the goal when moving to a pose. */
+  void setGoalPositionToleranceXYZ(double x_tol, double y_tol, double z_tol);
+
   /** \brief Set the orientation tolerance that is used for reaching the goal when moving to a pose. */
   void setGoalOrientationTolerance(double tolerance);
+
+  /** \brief Set the orientation tolerance along each axis that is used for reaching the goal when moving to a pose. */
+  void setGoalOrientationToleranceRPY(double r_tol, double p_toll, double y_toll);
 
   /** \brief Specify the workspace bounding box.
        The box is specified in the planning frame (i.e. relative to the robot root link start position).
