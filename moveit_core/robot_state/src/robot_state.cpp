@@ -1984,11 +1984,13 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
 double RobotState::computeCartesianPath(const JointModelGroup* group, std::vector<RobotStatePtr>& traj,
                                         const LinkModel* link, const EigenSTL::vector_Isometry3d& waypoints,
                                         bool global_reference_frame, double max_step, double jump_threshold_factor,
+                                        const bool spline_trajectory,
                                         const GroupStateValidityCallbackFn& validCallback,
                                         const kinematics::KinematicsQueryOptions& options)
 {
   return CartesianInterpolator::computeCartesianPath(this, group, traj, link, waypoints, global_reference_frame,
                                                      MaxEEFStep(max_step), JumpThreshold(jump_threshold_factor),
+                                                     spline_trajectory,
                                                      validCallback, options);
 }
 

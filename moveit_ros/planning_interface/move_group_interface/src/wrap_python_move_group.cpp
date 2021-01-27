@@ -477,23 +477,24 @@ public:
   }
 
   bp::tuple computeCartesianPathPython(const bp::list& waypoints, double eef_step, double jump_threshold,
-                                       bool avoid_collisions)
+                                       bool avoid_collisions, bool spline_trajectory)
   {
     moveit_msgs::Constraints path_constraints_tmp;
-    return doComputeCartesianPathPython(waypoints, eef_step, jump_threshold, avoid_collisions, path_constraints_tmp);
+    return doComputeCartesianPathPython(waypoints, eef_step, jump_threshold, avoid_collisions, spline_trajectory, path_constraints_tmp);
   }
 
   bp::tuple computeCartesianPathConstrainedPython(const bp::list& waypoints, double eef_step, double jump_threshold,
                                                   bool avoid_collisions,
+                                                  bool spline_trajectory,
                                                   const py_bindings_tools::ByteString& path_constraints_str)
   {
     moveit_msgs::Constraints path_constraints;
     py_bindings_tools::deserializeMsg(path_constraints_str, path_constraints);
-    return doComputeCartesianPathPython(waypoints, eef_step, jump_threshold, avoid_collisions, path_constraints);
+    return doComputeCartesianPathPython(waypoints, eef_step, jump_threshold, avoid_collisions, spline_trajectory, path_constraints);
   }
 
   bp::tuple doComputeCartesianPathPython(const bp::list& waypoints, double eef_step, double jump_threshold,
-                                         bool avoid_collisions, const moveit_msgs::Constraints& path_constraints)
+                                         bool avoid_collisions, bool spline_trajectory, const moveit_msgs::Constraints& path_constraints)
   {
     std::vector<geometry_msgs::Pose> poses;
     convertListToArrayOfPoses(waypoints, poses);
@@ -501,7 +502,8 @@ public:
     double fraction;
     {
       GILReleaser gr;
-      fraction = computeCartesianPath(poses, eef_step, jump_threshold, trajectory, path_constraints, avoid_collisions);
+      ROS_WARN("Calling computeCartesianPath in MoveGroupInterface spline trajectory %d", spline_trajectory);
+      fraction = computeCartesianPath(poses, eef_step, jump_threshold, trajectory, path_constraints, avoid_collisions, spline_trajectory);
     }
     return bp::make_tuple(py_bindings_tools::serializeMsg(trajectory), fraction);
   }

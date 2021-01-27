@@ -47,6 +47,8 @@ bool pilz_industrial_motion_planner::computePoseIK(const moveit::core::RobotMode
                                                    std::map<std::string, double>& solution, bool check_self_collision,
                                                    const double timeout)
 {
+
+  ROS_ERROR_STREAM("Doing Inverse kinematics" << link_name << " for pose \n" << pose.translation());
   if (!robot_model->hasJointModelGroup(group_name))
   {
     ROS_ERROR_STREAM("Robot model has no planning group named as " << group_name);
@@ -198,7 +200,7 @@ bool pilz_industrial_motion_planner::generateJointTrajectory(
     trajectory_msgs::JointTrajectory& joint_trajectory, moveit_msgs::MoveItErrorCodes& error_code,
     bool check_self_collision)
 {
-  ROS_DEBUG("Generate joint trajectory from a Cartesian trajectory.");
+  ROS_WARN("Generate joint trajectory from a Cartesian trajectory.");
 
   ros::Time generation_begin = ros::Time::now();
 
@@ -561,6 +563,7 @@ bool pilz_industrial_motion_planner::isStateColliding(const bool test_for_self_c
                                                       const robot_state::JointModelGroup* const group,
                                                       const double* const ik_solution)
 {
+  return false;
   if (!test_for_self_collision)
   {
     return true;

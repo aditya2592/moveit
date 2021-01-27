@@ -870,10 +870,11 @@ public:
 
   double computeCartesianPath(const std::vector<geometry_msgs::Pose>& waypoints, double step, double jump_threshold,
                               moveit_msgs::RobotTrajectory& msg, const moveit_msgs::Constraints& path_constraints,
-                              bool avoid_collisions, moveit_msgs::MoveItErrorCodes& error_code)
+                              bool avoid_collisions, bool spline_trajectory, moveit_msgs::MoveItErrorCodes& error_code)
   {
     moveit_msgs::GetCartesianPath::Request req;
     moveit_msgs::GetCartesianPath::Response res;
+    ROS_WARN_NAMED(LOGNAME, "Calling computeCartesianPath service with spline_trajectory %d", spline_trajectory);
 
     if (considered_start_state_)
       moveit::core::robotStateToRobotStateMsg(*considered_start_state_, req.start_state);
@@ -888,6 +889,7 @@ public:
     req.jump_threshold = jump_threshold;
     req.path_constraints = path_constraints;
     req.avoid_collisions = avoid_collisions;
+    req.spline_trajectory = spline_trajectory;
     req.link_name = getEndEffectorLink();
 
     if (cartesian_path_service_.call(req, res))
@@ -1513,28 +1515,30 @@ MoveItErrorCode MoveGroupInterface::place(const moveit_msgs::PlaceGoal& goal)
 
 double MoveGroupInterface::computeCartesianPath(const std::vector<geometry_msgs::Pose>& waypoints, double eef_step,
                                                 double jump_threshold, moveit_msgs::RobotTrajectory& trajectory,
-                                                bool avoid_collisions, moveit_msgs::MoveItErrorCodes* error_code)
+                                                bool avoid_collisions, bool spline_trajectory, moveit_msgs::MoveItErrorCodes* error_code)
 {
   moveit_msgs::Constraints path_constraints_tmp;
-  return computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, path_constraints_tmp, avoid_collisions,
+  return computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, path_constraints_tmp, avoid_collisions, spline_trajectory,
                               error_code);
 }
 
 double MoveGroupInterface::computeCartesianPath(const std::vector<geometry_msgs::Pose>& waypoints, double eef_step,
                                                 double jump_threshold, moveit_msgs::RobotTrajectory& trajectory,
                                                 const moveit_msgs::Constraints& path_constraints, bool avoid_collisions,
+                                                bool spline_trajectory,
                                                 moveit_msgs::MoveItErrorCodes* error_code)
 {
+  ROS_WARN_NAMED(LOGNAME, "Calling computeCartesianPath in MoveGroupInterfaceImpl spline trajectory %d", spline_trajectory);
   if (error_code)
   {
     return impl_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, path_constraints,
-                                       avoid_collisions, *error_code);
+                                       avoid_collisions, spline_trajectory, *error_code);
   }
   else
   {
     moveit_msgs::MoveItErrorCodes error_code_tmp;
     return impl_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, path_constraints,
-                                       avoid_collisions, error_code_tmp);
+                                       avoid_collisions, spline_trajectory, error_code_tmp);
   }
 }
 
