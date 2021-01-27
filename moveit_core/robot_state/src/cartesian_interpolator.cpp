@@ -80,8 +80,10 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const Eigen::Isometry3d& target, bool global_reference_frame,
                                                    const MaxEEFStep& max_step, const JumpThreshold& jump_threshold,
                                                    const GroupStateValidityCallbackFn& validCallback,
-                                                   const kinematics::KinematicsQueryOptions& options)
+                                                   const kinematics::KinematicsQueryOptions& options,
+                                                   bool spline_trajectory)
 {
+  ROS_WARN_NAMED(LOGNAME, "Inside computeCartesianPath in cartesian_interpolator, spline traj %d", spline_trajectory);
   const std::vector<const JointModel*>& cjnt = group->getContinuousJointModels();
   // make sure that continuous joints wrap
   for (const JointModel* joint : cjnt)
@@ -150,22 +152,32 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   traj.clear();
   traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
 
+
   double last_valid_percentage = 0.0;
-  for (std::size_t i = 1; i <= steps; ++i)
+  if (spline_trajectory)
   {
-    double percentage = (double)i / (double)steps;
+    for (std::size_t i = 1; i <= steps; ++i)
+    {
+      double percentage = (double)i / (double)steps;
 
-    Eigen::Isometry3d pose(start_quaternion.slerp(percentage, target_quaternion));
-    pose.translation() = percentage * rotated_target.translation() + (1 - percentage) * start_pose.translation();
+      Eigen::Isometry3d pose(start_quaternion.slerp(percentage, target_quaternion));
+      pose.translation() = percentage * rotated_target.translation() + (1 - percentage) * start_pose.translation();
 
-    // Explicitly use a single IK attempt only: We want a smooth trajectory.
-    // Random seeding (of additional attempts) would probably create IK jumps.
-    if (start_state->setFromIK(group, pose, link->getName(), consistency_limits, 0.0, validCallback, options))
+      // Explicitly use a single IK attempt only: We want a smooth trajectory.
+      // Random seeding (of additional attempts) would probably create IK jumps.
+      if (start_state->setFromIK(group, pose, link->getName(), consistency_limits, 0.0, validCallback, options))
+        traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
+      else
+        break;
+
+      last_valid_percentage = percentage;
+    }
+
+  }
+  else 
+  {
+    if (start_state->setFromIK(group, rotated_target, link->getName(), consistency_limits, 0.0, validCallback, options))
       traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
-    else
-      break;
-
-    last_valid_percentage = percentage;
   }
 
   last_valid_percentage *= checkJointSpaceJump(group, traj, jump_threshold);
@@ -178,6 +190,7 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const EigenSTL::vector_Isometry3d& waypoints,
                                                    bool global_reference_frame, const MaxEEFStep& max_step,
                                                    const JumpThreshold& jump_threshold,
+                                                   const bool spline_trajectory,
                                                    const GroupStateValidityCallbackFn& validCallback,
                                                    const kinematics::KinematicsQueryOptions& options)
 {
@@ -189,7 +202,7 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
     std::vector<RobotStatePtr> waypoint_traj;
     double wp_percentage_solved =
         computeCartesianPath(start_state, group, waypoint_traj, link, waypoints[i], global_reference_frame, max_step,
-                             NO_JOINT_SPACE_JUMP_TEST, validCallback, options);
+                             NO_JOINT_SPACE_JUMP_TEST, validCallback, options, spline_trajectory);
     if (fabs(wp_percentage_solved - 1.0) < std::numeric_limits<double>::epsilon())
     {
       percentage_solved = (double)(i + 1) / (double)waypoints.size();

@@ -1166,6 +1166,7 @@ public:
   computeCartesianPath(const JointModelGroup* group, std::vector<RobotStatePtr>& traj, const LinkModel* link,
                        const EigenSTL::vector_Isometry3d& waypoints, bool global_reference_frame, double max_step,
                        double jump_threshold_factor,
+                       const bool spline_trajectory = true,
                        const GroupStateValidityCallbackFn& validCallback = GroupStateValidityCallbackFn(),
                        const kinematics::KinematicsQueryOptions& options = kinematics::KinematicsQueryOptions());
 
