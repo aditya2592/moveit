@@ -177,7 +177,11 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   else 
   {
     if (start_state->setFromIK(group, rotated_target, link->getName(), consistency_limits, 0.0, validCallback, options))
+    {
+      ROS_WARN_NAMED(LOGNAME, "Done IK for waypoint");
+      last_valid_percentage = 1.0;
       traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
+    }
   }
 
   last_valid_percentage *= checkJointSpaceJump(group, traj, jump_threshold);
