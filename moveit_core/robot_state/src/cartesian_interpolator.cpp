@@ -83,7 +83,7 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const kinematics::KinematicsQueryOptions& options,
                                                    bool spline_trajectory)
 {
-  ROS_WARN_NAMED(LOGNAME, "Inside computeCartesianPath in cartesian_interpolator, spline traj %d", spline_trajectory);
+  // ROS_WARN_NAMED(LOGNAME, "Inside computeCartesianPath in cartesian_interpolator, spline traj %d", spline_trajectory);
   const std::vector<const JointModel*>& cjnt = group->getContinuousJointModels();
   // make sure that continuous joints wrap
   for (const JointModel* joint : cjnt)
@@ -178,9 +178,13 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   {
     if (start_state->setFromIK(group, rotated_target, link->getName(), consistency_limits, 0.0, validCallback, options))
     {
-      ROS_WARN_NAMED(LOGNAME, "Done IK for waypoint");
+      // ROS_WARN_NAMED(LOGNAME, "Done IK for waypoint");
       last_valid_percentage = 1.0;
       traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
+    }
+    else 
+    {
+      ROS_ERROR_NAMED(LOGNAME, "IK Failed for pose");
     }
   }
 
