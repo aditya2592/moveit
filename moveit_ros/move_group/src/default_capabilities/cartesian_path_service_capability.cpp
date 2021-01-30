@@ -148,11 +148,9 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
                          (unsigned int)waypoints.size(), link_name.c_str(), req.max_step, req.jump_threshold,
                          global_frame ? "global" : "link");
           std::vector<moveit::core::RobotStatePtr> traj;
-          kinematics::KinematicsQueryOptions options;
-          options.return_approximate_solution = true;
           res.fraction = moveit::core::CartesianInterpolator::computeCartesianPath(
               &start_state, jmg, traj, start_state.getLinkModel(link_name), waypoints, global_frame,
-              moveit::core::MaxEEFStep(req.max_step), moveit::core::JumpThreshold(req.jump_threshold), req.spline_trajectory, constraint_fn, options);
+              moveit::core::MaxEEFStep(req.max_step), moveit::core::JumpThreshold(req.jump_threshold), req.spline_trajectory, constraint_fn);
           moveit::core::robotStateToRobotStateMsg(start_state, res.start_state);
 
           robot_trajectory::RobotTrajectory rt(context_->planning_scene_monitor_->getRobotModel(), req.group_name);

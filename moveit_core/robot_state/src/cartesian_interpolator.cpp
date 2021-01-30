@@ -202,16 +202,25 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const GroupStateValidityCallbackFn& validCallback,
                                                    const kinematics::KinematicsQueryOptions& options)
 {
-  ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options.return_approximate_solution);
   double percentage_solved = 0.0;
   for (std::size_t i = 0; i < waypoints.size(); ++i)
   {
+    kinematics::KinematicsQueryOptions options_mod;
+    if (i < waypoints.size() - 1)
+    {
+      options_mod.return_approximate_solution = true;
+      ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
+    }
+    else 
+    {
+      options_mod.return_approximate_solution = false;
+    }
     // Don't test joint space jumps for every waypoint, test them later on the whole trajectory.
     static const JumpThreshold NO_JOINT_SPACE_JUMP_TEST;
     std::vector<RobotStatePtr> waypoint_traj;
     double wp_percentage_solved =
         computeCartesianPath(start_state, group, waypoint_traj, link, waypoints[i], global_reference_frame, max_step,
-                             NO_JOINT_SPACE_JUMP_TEST, validCallback, options, spline_trajectory);
+                             NO_JOINT_SPACE_JUMP_TEST, validCallback, options_mod, spline_trajectory);
     if (fabs(wp_percentage_solved - 1.0) < std::numeric_limits<double>::epsilon())
     {
       percentage_solved = (double)(i + 1) / (double)waypoints.size();
