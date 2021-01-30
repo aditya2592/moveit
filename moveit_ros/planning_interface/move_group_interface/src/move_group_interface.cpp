@@ -897,7 +897,8 @@ public:
     req.avoid_collisions = avoid_collisions;
     req.spline_trajectory = spline_trajectory;
     req.link_name = getEndEffectorLink();
-
+    req.max_velocity_scaling_factor = max_velocity_scaling_factor_;
+    req.max_acceleration_scaling_factor = max_acceleration_scaling_factor_;
     if (cartesian_path_service_.call(req, res))
     {
       error_code = res.error_code;
