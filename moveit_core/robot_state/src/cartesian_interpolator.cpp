@@ -202,6 +202,7 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const GroupStateValidityCallbackFn& validCallback,
                                                    const kinematics::KinematicsQueryOptions& options)
 {
+  ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options.return_approximate_solution);
   double percentage_solved = 0.0;
   for (std::size_t i = 0; i < waypoints.size(); ++i)
   {
