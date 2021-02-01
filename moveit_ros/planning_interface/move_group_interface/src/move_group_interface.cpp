@@ -354,6 +354,16 @@ public:
     setMaxScalingFactor(max_acceleration_scaling_factor_, value, "acceleration_scaling_factor", 0.1);
   }
 
+  void setTrajectoryMaxVelocityScalingFactor(std::vector<double> value)
+  {
+    velocity_scaling_vec_ = value;
+  }
+
+  void setTrajectoryMaxAccelerationScalingFactor(std::vector<double> value)
+  {
+    acc_scaling_vec_ = value;
+  }
+
   void setMaxScalingFactor(double& variable, const double target_value, const char* factor_name, double fallback_value)
   {
     if (target_value > 1.0)
@@ -899,6 +909,8 @@ public:
     req.link_name = getEndEffectorLink();
     req.max_velocity_scaling_factor = max_velocity_scaling_factor_;
     req.max_acceleration_scaling_factor = max_acceleration_scaling_factor_;
+    req.trajectory_max_velocity_scaling_factor = velocity_scaling_vec_;
+    req.trajectory_max_acceleration_scaling_factor = acc_scaling_vec_;
     if (cartesian_path_service_.call(req, res))
     {
       error_code = res.error_code;
@@ -1309,6 +1321,8 @@ private:
   std::vector<double> goal_position_tolerance_;
   // double goal_orientation_tolerance_;
   std::vector<double> goal_orientation_tolerance_;
+  std::vector<double> velocity_scaling_vec_;
+  std::vector<double> acc_scaling_vec_;
   bool can_look_;
   bool can_replan_;
   double replan_delay_;
@@ -1460,6 +1474,16 @@ void MoveGroupInterface::setMaxVelocityScalingFactor(double max_velocity_scaling
 void MoveGroupInterface::setMaxAccelerationScalingFactor(double max_acceleration_scaling_factor)
 {
   impl_->setMaxAccelerationScalingFactor(max_acceleration_scaling_factor);
+}
+
+void MoveGroupInterface::setTrajectoryMaxVelocityScalingFactor(const std::vector<double>& vel_trajectory_scaling_factor)
+{
+  impl_->setTrajectoryMaxVelocityScalingFactor(vel_trajectory_scaling_factor);
+}
+
+void MoveGroupInterface::setTrajectoryMaxAccelerationScalingFactor(const std::vector<double>& acc_trajectory_scaling_factor)
+{
+  impl_->setTrajectoryMaxAccelerationScalingFactor(acc_trajectory_scaling_factor);
 }
 
 MoveItErrorCode MoveGroupInterface::asyncMove()

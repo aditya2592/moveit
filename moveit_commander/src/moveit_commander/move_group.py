@@ -30,7 +30,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: Ioan Sucan, William Baker
+# Author: Ioan Sucan, William B)aker
 
 from geometry_msgs.msg import Pose, PoseStamped
 from moveit_msgs.msg import RobotTrajectory, Grasp, PlaceLocation, Constraints, RobotState
@@ -38,6 +38,7 @@ from moveit_msgs.msg import MoveItErrorCodes, TrajectoryConstraints, PlannerInte
 from sensor_msgs.msg import JointState
 import rospy
 import tf
+import numpy as np
 from moveit_ros_planning_interface import _moveit_move_group_interface
 from .exception import MoveItCommanderException
 import moveit_commander.conversions as conversions
@@ -501,6 +502,22 @@ class MoveGroupCommander(object):
             The default value is set in the joint_limits.yaml of the moveit_config package. """
         if value > 0 and value <= 1:
             self._g.set_max_acceleration_scaling_factor(value)
+        else:
+            raise MoveItCommanderException("Expected value in the range from 0 to 1 for scaling factor")
+
+    def set_trajectory_max_velocity_scaling_factor(self, value):
+        """ Set a scaling factor to reduce the maximum joint velocities. Allowed values are in (0,1].
+            The default value is set in the joint_limits.yaml of the moveit_config package. """
+        if np.all(np.array(value) > 0) and np.all(np.array(value)) <= 1:
+            self._g.set_trajectory_max_velocity_scaling_factor(value)
+        else:
+            raise MoveItCommanderException("Expected value in the range from 0 to 1 for scaling factor")
+
+    def set_trajectory_max_acceleration_scaling_factor(self, value):
+        """ Set a scaling factor to reduce the maximum joint accelerations. Allowed values are in (0,1].
+            The default value is set in the joint_limits.yaml of the moveit_config package. """
+        if np.all(np.array(value) > 0) and np.all(np.array(value)) <= 1:
+            self._g.set_trajectory_max_acceleration_scaling_factor(value)
         else:
             raise MoveItCommanderException("Expected value in the range from 0 to 1 for scaling factor")
 

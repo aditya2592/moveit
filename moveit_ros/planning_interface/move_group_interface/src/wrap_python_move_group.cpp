@@ -475,6 +475,17 @@ public:
     return bp::make_tuple(py_bindings_tools::serializeMsg(res), py_bindings_tools::serializeMsg(plan.trajectory_),
                           plan.planning_time_);
   }
+  void setTrajectoryMaxVelocityScalingFactorPython(const bp::list& trajectory_scaling_factor)
+  {
+    std::vector<double> v = py_bindings_tools::doubleFromList(trajectory_scaling_factor);
+    setTrajectoryMaxVelocityScalingFactor(v);
+  }
+
+  void setTrajectoryMaxAccelerationScalingFactorPython(const bp::list& trajectory_scaling_factor)
+  {
+    std::vector<double> v = py_bindings_tools::doubleFromList(trajectory_scaling_factor);
+    setTrajectoryMaxAccelerationScalingFactor(v);
+  }
 
   bp::tuple computeCartesianPathPython(const bp::list& waypoints, double eef_step, double jump_threshold,
                                        bool avoid_collisions, bool spline_trajectory)
@@ -759,6 +770,10 @@ static void wrap_move_group_interface()
                                  &MoveGroupInterfaceWrapper::setMaxVelocityScalingFactor);
   move_group_interface_class.def("set_max_acceleration_scaling_factor",
                                  &MoveGroupInterfaceWrapper::setMaxAccelerationScalingFactor);
+  move_group_interface_class.def("set_trajectory_max_velocity_scaling_factor",
+                                 &MoveGroupInterfaceWrapper::setTrajectoryMaxVelocityScalingFactorPython);
+  move_group_interface_class.def("set_trajectory_max_acceleration_scaling_factor",
+                                 &MoveGroupInterfaceWrapper::setTrajectoryMaxAccelerationScalingFactorPython);
   move_group_interface_class.def("set_planner_id", &MoveGroupInterfaceWrapper::setPlannerId);
   move_group_interface_class.def("get_planner_id", &MoveGroupInterfaceWrapper::getPlannerIdCStr);
   move_group_interface_class.def("set_num_planning_attempts", &MoveGroupInterfaceWrapper::setNumPlanningAttempts);

@@ -258,6 +258,10 @@ public:
       If the value is greater than 1, it is set to 1.0. */
   void setMaxAccelerationScalingFactor(double max_acceleration_scaling_factor);
 
+  void setTrajectoryMaxVelocityScalingFactor(const std::vector<double>& vel_trajectory_scaling_factor);
+
+  void setTrajectoryMaxAccelerationScalingFactor(const std::vector<double>& acc_trajectory_scaling_factor);
+
   /** \brief Get the number of seconds set by setPlanningTime() */
   double getPlanningTime() const;
 

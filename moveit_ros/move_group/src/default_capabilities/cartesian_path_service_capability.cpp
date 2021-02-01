@@ -160,9 +160,18 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
           // time trajectory
           // \todo optionally compute timing to move the eef with constant speed
 
-          ROS_WARN_NAMED(getName(), "Velocity scaling factor %f, Acceleration scaling factor %f", req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
           trajectory_processing::IterativeParabolicTimeParameterization time_param;
-          time_param.computeTimeStamps(rt, req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
+          if (req.trajectory_max_velocity_scaling_factor.size() > 0 && req.trajectory_max_acceleration_scaling_factor.size() > 0 && !req.spline_trajectory)
+          {
+            // Use traj scaling when not doing moveit spline and when arrays populated 
+            ROS_WARN_NAMED(getName(), "Using velocity scaling factor vector size %ld, acceleration scaling factor veector size %ld", req.trajectory_max_velocity_scaling_factor.size(), req.trajectory_max_acceleration_scaling_factor.size());
+            time_param.computeDynamicTimeStamps(rt, req.trajectory_max_velocity_scaling_factor, req.trajectory_max_acceleration_scaling_factor);
+          }
+          else
+          {
+            ROS_WARN_NAMED(getName(), "Using velocity scaling factor %f, acceleration scaling factor %f", req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
+            time_param.computeTimeStamps(rt, req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
+          }
 
           rt.getRobotTrajectoryMsg(res.solution);
           ROS_WARN_NAMED(getName(), "Computed Cartesian path with %u points (followed %lf%% of requested trajectory)",

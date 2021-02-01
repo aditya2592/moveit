@@ -98,7 +98,7 @@ void printStats(const trajectory_msgs::JointTrajectory& trajectory, const std::v
 // Applies velocity
 void IterativeParabolicTimeParameterization::applyVelocityConstraints(robot_trajectory::RobotTrajectory& rob_trajectory,
                                                                       std::vector<double>& time_diff,
-                                                                      const double max_velocity_scaling_factor) const
+                                                                      const std::vector<double> velocity_scaling_factor) const
 {
   const moveit::core::JointModelGroup* group = rob_trajectory.getGroup();
   const std::vector<std::string>& vars = group->getVariableNames();
@@ -106,18 +106,18 @@ void IterativeParabolicTimeParameterization::applyVelocityConstraints(robot_traj
   const moveit::core::RobotModel& rmodel = group->getParentModel();
   const int num_points = rob_trajectory.getWayPointCount();
 
-  double velocity_scaling_factor = 1.0;
+  // double velocity_scaling_factor = 1.0;
 
-  if (max_velocity_scaling_factor > 0.0 && max_velocity_scaling_factor <= 1.0)
-    velocity_scaling_factor = max_velocity_scaling_factor;
-  else if (max_velocity_scaling_factor == 0.0)
-    ROS_DEBUG_NAMED("trajectory_processing.iterative_time_parameterization",
-                    "A max_velocity_scaling_factor of 0.0 was specified, defaulting to %f instead.",
-                    velocity_scaling_factor);
-  else
-    ROS_WARN_NAMED("trajectory_processing.iterative_time_parameterization",
-                   "Invalid max_velocity_scaling_factor %f specified, defaulting to %f instead.",
-                   max_velocity_scaling_factor, velocity_scaling_factor);
+  // if (max_velocity_scaling_factor > 0.0 && max_velocity_scaling_factor <= 1.0)
+  //   velocity_scaling_factor = max_velocity_scaling_factor;
+  // else if (max_velocity_scaling_factor == 0.0)
+  //   ROS_DEBUG_NAMED("trajectory_processing.iterative_time_parameterization",
+  //                   "A max_velocity_scaling_factor of 0.0 was specified, defaulting to %f instead.",
+  //                   velocity_scaling_factor);
+  // else
+  //   ROS_WARN_NAMED("trajectory_processing.iterative_time_parameterization",
+  //                  "Invalid max_velocity_scaling_factor %f specified, defaulting to %f instead.",
+  //                  max_velocity_scaling_factor, velocity_scaling_factor);
 
   for (int i = 0; i < num_points - 1; ++i)
   {
@@ -130,7 +130,7 @@ void IterativeParabolicTimeParameterization::applyVelocityConstraints(robot_traj
       const moveit::core::VariableBounds& b = rmodel.getVariableBounds(vars[j]);
       if (b.velocity_bounded_)
         v_max =
-            std::min(fabs(b.max_velocity_ * velocity_scaling_factor), fabs(b.min_velocity_ * velocity_scaling_factor));
+            std::min(fabs(b.max_velocity_ * velocity_scaling_factor[i]), fabs(b.min_velocity_ * velocity_scaling_factor[i]));
       const double dq1 = curr_waypoint->getVariablePosition(idx[j]);
       const double dq2 = next_waypoint->getVariablePosition(idx[j]);
       const double t_min = std::abs(dq2 - dq1) / v_max;
@@ -297,7 +297,7 @@ void updateTrajectory(robot_trajectory::RobotTrajectory& rob_trajectory, const s
 // Applies Acceleration constraints
 void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
     robot_trajectory::RobotTrajectory& rob_trajectory, std::vector<double>& time_diff,
-    const double max_acceleration_scaling_factor) const
+    const std::vector<double> acceleration_scaling_factor) const
 {
   moveit::core::RobotStatePtr prev_waypoint;
   moveit::core::RobotStatePtr curr_waypoint;
@@ -321,19 +321,6 @@ void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
   double v1;
   double v2;
   double a;
-
-  double acceleration_scaling_factor = 1.0;
-
-  if (max_acceleration_scaling_factor > 0.0 && max_acceleration_scaling_factor <= 1.0)
-    acceleration_scaling_factor = max_acceleration_scaling_factor;
-  else if (max_acceleration_scaling_factor == 0.0)
-    ROS_DEBUG_NAMED("trajectory_processing.iterative_time_parameterization",
-                    "A max_acceleration_scaling_factor of 0.0 was specified, defaulting to %f instead.",
-                    acceleration_scaling_factor);
-  else
-    ROS_WARN_NAMED("trajectory_processing.iterative_time_parameterization",
-                   "Invalid max_acceleration_scaling_factor %f specified, defaulting to %f instead.",
-                   max_acceleration_scaling_factor, acceleration_scaling_factor);
 
   do
   {
@@ -363,8 +350,8 @@ void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
           double a_max = DEFAULT_ACCEL_MAX;
           const moveit::core::VariableBounds& b = rmodel.getVariableBounds(vars[j]);
           if (b.acceleration_bounded_)
-            a_max = std::min(fabs(b.max_acceleration_ * acceleration_scaling_factor),
-                             fabs(b.min_acceleration_ * acceleration_scaling_factor));
+            a_max = std::min(fabs(b.max_acceleration_ * acceleration_scaling_factor[i]),
+                             fabs(b.min_acceleration_ * acceleration_scaling_factor[i]));
 
           if (index == 0)
           {
@@ -470,16 +457,79 @@ bool IterativeParabolicTimeParameterization::computeTimeStamps(robot_trajectory:
     return false;
   }
 
+  const int num_points = trajectory.getWayPointCount();
+
+  // Create vector for velocity scaling from single value
+  double velocity_scaling_factor = 1.0;
+
+  if (max_velocity_scaling_factor > 0.0 && max_velocity_scaling_factor <= 1.0)
+    velocity_scaling_factor = max_velocity_scaling_factor;
+  else if (max_velocity_scaling_factor == 0.0)
+    ROS_DEBUG_NAMED("trajectory_processing.iterative_time_parameterization",
+                    "A max_velocity_scaling_factor of 0.0 was specified, defaulting to %f instead.",
+                    velocity_scaling_factor);
+  else
+    ROS_WARN_NAMED("trajectory_processing.iterative_time_parameterization",
+                   "Invalid max_velocity_scaling_factor %f specified, defaulting to %f instead.",
+                   max_velocity_scaling_factor, velocity_scaling_factor);
+  
+  std::vector<double> velocity_scaling_factor_vec(num_points, velocity_scaling_factor);
+
+  // Create a vector for accleration scaling
+  double acceleration_scaling_factor = 1.0;
+
+  if (max_acceleration_scaling_factor > 0.0 && max_acceleration_scaling_factor <= 1.0)
+    acceleration_scaling_factor = max_acceleration_scaling_factor;
+  else if (max_acceleration_scaling_factor == 0.0)
+    ROS_DEBUG_NAMED("trajectory_processing.iterative_time_parameterization",
+                    "A max_acceleration_scaling_factor of 0.0 was specified, defaulting to %f instead.",
+                    acceleration_scaling_factor);
+  else
+    ROS_WARN_NAMED("trajectory_processing.iterative_time_parameterization",
+                   "Invalid max_acceleration_scaling_factor %f specified, defaulting to %f instead.",
+                   max_acceleration_scaling_factor, acceleration_scaling_factor);
+
+  std::vector<double> acc_scaling_factor_vec(num_points, max_acceleration_scaling_factor);
+
   // this lib does not actually work properly when angles wrap around, so we need to unwind the path first
   trajectory.unwind();
 
-  const int num_points = trajectory.getWayPointCount();
   std::vector<double> time_diff(num_points - 1, 0.0);  // the time difference between adjacent points
 
-  applyVelocityConstraints(trajectory, time_diff, max_velocity_scaling_factor);
-  applyAccelerationConstraints(trajectory, time_diff, max_acceleration_scaling_factor);
+  applyVelocityConstraints(trajectory, time_diff, velocity_scaling_factor_vec);
+  applyAccelerationConstraints(trajectory, time_diff, acc_scaling_factor_vec);
 
   updateTrajectory(trajectory, time_diff);
   return true;
+}
+
+bool IterativeParabolicTimeParameterization::computeDynamicTimeStamps(robot_trajectory::RobotTrajectory& trajectory,
+                                                               const std::vector<double> velocity_scaling_factor,
+                                                               const std::vector<double> acc_scaling_factor) const
+{
+  if (trajectory.empty())
+    return true;
+
+  const moveit::core::JointModelGroup* group = trajectory.getGroup();
+  if (!group)
+  {
+    ROS_ERROR_NAMED("trajectory_processing.iterative_time_parameterization", "It looks like the planner did not set "
+                                                                             "the group the plan was computed for");
+    return false;
+  }
+
+  const int num_points = trajectory.getWayPointCount();
+
+  // this lib does not actually work properly when angles wrap around, so we need to unwind the path first
+  trajectory.unwind();
+
+  std::vector<double> time_diff(num_points - 1, 0.0);  // the time difference between adjacent points
+
+  applyVelocityConstraints(trajectory, time_diff, velocity_scaling_factor);
+  applyAccelerationConstraints(trajectory, time_diff, acc_scaling_factor);
+
+  updateTrajectory(trajectory, time_diff);
+  return true;
+
 }
 }  // namespace trajectory_processing
