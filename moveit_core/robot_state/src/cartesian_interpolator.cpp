@@ -209,11 +209,12 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
     if (i < waypoints.size() - 1)
     {
       options_mod.return_approximate_solution = true;
-      ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
+      // ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
     }
     else 
     {
       options_mod.return_approximate_solution = false;
+      ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
     }
     // Don't test joint space jumps for every waypoint, test them later on the whole trajectory.
     static const JumpThreshold NO_JOINT_SPACE_JUMP_TEST;
