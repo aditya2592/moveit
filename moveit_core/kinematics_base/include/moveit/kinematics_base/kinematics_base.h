@@ -110,6 +110,7 @@ struct KinematicsQueryOptions
     : lock_redundant_joints(false)
     , return_approximate_solution(false)
     , discretization_method(DiscretizationMethods::NO_DISCRETIZATION)
+    , tolerence(0.00001)
   {
   }
 
@@ -117,6 +118,7 @@ struct KinematicsQueryOptions
   bool return_approximate_solution;           /**<  KinematicsQueryOptions#return_approximate_solution. */
   DiscretizationMethod discretization_method; /**<  Enumeration value that indicates the method for discretizing the
                                                     redundant. joints KinematicsQueryOptions#discretization_method. */
+  double tolerence; /** IK tolerence */
 };
 
 /*

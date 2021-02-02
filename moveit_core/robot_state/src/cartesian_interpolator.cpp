@@ -206,16 +206,18 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   for (std::size_t i = 0; i < waypoints.size(); ++i)
   {
     kinematics::KinematicsQueryOptions options_mod;
-    if (i < waypoints.size() - 1)
-    {
-      options_mod.return_approximate_solution = true;
-      // ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
-    }
-    else 
-    {
-      options_mod.return_approximate_solution = false;
-      ROS_WARN_NAMED(LOGNAME, "Approximate IK solution %d", options_mod.return_approximate_solution);
-    }
+    // if (i < waypoints.size() - 1)
+    // {
+      // options_mod.return_approximate_solution = true;
+      // options_mod.tolerence = 0.01;
+      // ROS_WARN_NAMED(LOGNAME, "IK solution tolerence %f", options_mod.tolerence);
+      // ROS_WARN_NAMED(LOGNAME, "Setpoint " << waypoints[i].translation());
+    // }
+    // else 
+    // {
+    //   // options_mod.return_approximate_solution = false;
+    //   ROS_WARN_NAMED(LOGNAME, "IK solution tolerence %f", options_mod.tolerence);
+    // }
     // Don't test joint space jumps for every waypoint, test them later on the whole trajectory.
     static const JumpThreshold NO_JOINT_SPACE_JUMP_TEST;
     std::vector<RobotStatePtr> waypoint_traj;
