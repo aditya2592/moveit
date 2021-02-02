@@ -339,6 +339,7 @@ void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
           int index = backwards ? (num_points - 1) - i : i;
 
           curr_waypoint = rob_trajectory.getWayPointPtr(index);
+          double current_acceleration_scaling_factor_ = 1.0;
 
           if (index > 0)
             prev_waypoint = rob_trajectory.getWayPointPtr(index - 1);
@@ -346,12 +347,17 @@ void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
           if (index < num_points - 1)
             next_waypoint = rob_trajectory.getWayPointPtr(index + 1);
 
+          if (acceleration_scaling_factor[index] > 0.0 && (index > 0 && index < num_points - 1)) 
+            current_acceleration_scaling_factor_ = acceleration_scaling_factor[index];
+
           // Get acceleration limits
           double a_max = DEFAULT_ACCEL_MAX;
           const moveit::core::VariableBounds& b = rmodel.getVariableBounds(vars[j]);
+          // ROS_INFO("acceleration_scaling_factor for point %d : %f", index, acceleration_scaling_factor[index]);
+
           if (b.acceleration_bounded_)
-            a_max = std::min(fabs(b.max_acceleration_ * acceleration_scaling_factor[i]),
-                             fabs(b.min_acceleration_ * acceleration_scaling_factor[i]));
+            a_max = std::min(fabs(b.max_acceleration_ * current_acceleration_scaling_factor_),
+                             fabs(b.min_acceleration_ * current_acceleration_scaling_factor_));
 
           if (index == 0)
           {

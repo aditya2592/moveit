@@ -161,11 +161,24 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
           // \todo optionally compute timing to move the eef with constant speed
 
           trajectory_processing::IterativeParabolicTimeParameterization time_param;
-          if (req.trajectory_max_velocity_scaling_factor.size() > 0 && req.trajectory_max_acceleration_scaling_factor.size() > 0 && !req.spline_trajectory)
+          if (req.trajectory_max_velocity_scaling_factor.size() > 0 && 
+              req.trajectory_max_acceleration_scaling_factor.size() > 0 && 
+              !req.spline_trajectory)
           {
-            // Use traj scaling when not doing moveit spline and when arrays populated 
-            ROS_WARN_NAMED(getName(), "Using velocity scaling factor vector size %ld, acceleration scaling factor veector size %ld", req.trajectory_max_velocity_scaling_factor.size(), req.trajectory_max_acceleration_scaling_factor.size());
-            time_param.computeDynamicTimeStamps(rt, req.trajectory_max_velocity_scaling_factor, req.trajectory_max_acceleration_scaling_factor);
+            if (req.trajectory_max_velocity_scaling_factor.size() == req.waypoints.size() && 
+                req.trajectory_max_acceleration_scaling_factor.size() == req.waypoints.size())
+            {
+              // Use traj scaling when not doing moveit spline and when arrays populated 
+              ROS_WARN_NAMED(getName(), "Using velocity scaling factor vector size %ld, acceleration scaling factor veector size %ld, waypoints size %ld", 
+              req.trajectory_max_velocity_scaling_factor.size(), req.trajectory_max_acceleration_scaling_factor.size(), req.waypoints.size());
+              time_param.computeDynamicTimeStamps(rt, req.trajectory_max_velocity_scaling_factor, req.trajectory_max_acceleration_scaling_factor);
+            }
+            else 
+            {
+              ROS_ERROR_NAMED(getName(), "Invalid size to use traj scaling, traj acc size %ld, traj vel size %ld, waypoints size %ld",
+              req.trajectory_max_velocity_scaling_factor.size(), req.trajectory_max_acceleration_scaling_factor.size(), req.waypoints.size());
+              time_param.computeTimeStamps(rt, req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
+            }
           }
           else
           {
