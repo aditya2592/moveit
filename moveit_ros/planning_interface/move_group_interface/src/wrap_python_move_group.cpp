@@ -301,6 +301,37 @@ public:
     return place(object_name, plan_only) == MoveItErrorCode::SUCCESS;
   }
 
+  void convertRotvecListToArrayOfPoses(const bp::list& poses, std::vector<geometry_msgs::Pose>& msg)
+  {
+    ROS_WARN("Assuming pose list contains rotation vectors");
+    int l = bp::len(poses);
+    for (int i = 0; i < l; ++i)
+    {
+      const bp::list& pose = bp::extract<bp::list>(poses[i]);
+      std::vector<double> v = py_bindings_tools::doubleFromList(pose);
+      if (v.size() == 6)
+      {
+        Eigen::Isometry3d p;
+        tf2::Quaternion tq;
+        // tq.setRPY(v[3], v[4], v[5]);
+        Eigen::Vector3d rot_axis(v[3], v[4], v[5]);
+        double angle = rot_axis.norm();
+        rot_axis = rot_axis/angle;
+        tf2::Vector3 rot_ax_tf;
+        tf2::convert(rot_axis, rot_ax_tf);
+        tq.setRotation(rot_ax_tf, angle);
+        Eigen::Quaterniond eq;
+        tf2::convert(tq, eq);
+        p = Eigen::Isometry3d(eq);
+        p.translation() = Eigen::Vector3d(v[0], v[1], v[2]);
+        geometry_msgs::Pose pm = tf2::toMsg(p);
+        msg.push_back(pm);
+      }
+      else
+        ROS_WARN("Incorrect number of values for a pose: %u", (unsigned int)v.size());
+    }
+  }
+
   void convertListToArrayOfPoses(const bp::list& poses, std::vector<geometry_msgs::Pose>& msg)
   {
     int l = bp::len(poses);
@@ -508,7 +539,7 @@ public:
                                          bool avoid_collisions, bool spline_trajectory, const moveit_msgs::Constraints& path_constraints)
   {
     std::vector<geometry_msgs::Pose> poses;
-    convertListToArrayOfPoses(waypoints, poses);
+    convertRotvecListToArrayOfPoses(waypoints, poses);
     moveit_msgs::RobotTrajectory trajectory;
     double fraction;
     {
