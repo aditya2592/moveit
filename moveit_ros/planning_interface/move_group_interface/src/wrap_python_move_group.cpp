@@ -544,7 +544,6 @@ public:
     double fraction;
     {
       GILReleaser gr;
-      ROS_WARN("Calling computeCartesianPath in MoveGroupInterface spline trajectory %d", spline_trajectory);
       fraction = computeCartesianPath(poses, eef_step, jump_threshold, trajectory, path_constraints, avoid_collisions, spline_trajectory);
     }
     return bp::make_tuple(py_bindings_tools::serializeMsg(trajectory), fraction);

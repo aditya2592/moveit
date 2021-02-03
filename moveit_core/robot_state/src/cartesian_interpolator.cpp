@@ -51,6 +51,8 @@ static const std::size_t MIN_STEPS_FOR_JUMP_THRESH = 10;
 
 const std::string LOGNAME = "cartesian_interpolator";
 
+static double total_ik_generation_time = 0.0;
+
 double CartesianInterpolator::computeCartesianPath(RobotState* start_state, const JointModelGroup* group,
                                                    std::vector<RobotStatePtr>& traj, const LinkModel* link,
                                                    const Eigen::Vector3d& direction, bool global_reference_frame,
@@ -176,11 +178,14 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   }
   else 
   {
+    ros::Time generation_begin = ros::Time::now();
     if (start_state->setFromIK(group, rotated_target, link->getName(), consistency_limits, 0.0, validCallback, options))
     {
       // ROS_WARN_NAMED(LOGNAME, "Done IK for waypoint");
       last_valid_percentage = 1.0;
       traj.push_back(RobotStatePtr(new moveit::core::RobotState(*start_state)));
+      double duration_s = (ros::Time::now() - generation_begin).toSec();
+      total_ik_generation_time += duration_s;
     }
     else 
     {
@@ -203,6 +208,7 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                                                    const kinematics::KinematicsQueryOptions& options)
 {
   double percentage_solved = 0.0;
+  double points_solved = 0;
   for (std::size_t i = 0; i < waypoints.size(); ++i)
   {
     kinematics::KinematicsQueryOptions options_mod;
@@ -226,6 +232,9 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
                              NO_JOINT_SPACE_JUMP_TEST, validCallback, options_mod, spline_trajectory);
     if (fabs(wp_percentage_solved - 1.0) < std::numeric_limits<double>::epsilon())
     {
+      // If successful in computing path
+      if (!spline_trajectory)
+        points_solved += 1;
       percentage_solved = (double)(i + 1) / (double)waypoints.size();
       std::vector<RobotStatePtr>::iterator start = waypoint_traj.begin();
       if (i > 0 && !waypoint_traj.empty())
@@ -244,6 +253,15 @@ double CartesianInterpolator::computeCartesianPath(RobotState* start_state, cons
   }
 
   percentage_solved *= checkJointSpaceJump(group, traj, jump_threshold);
+  if (!spline_trajectory)
+  {
+    // For this case, print average time for each IK
+    if (points_solved > 0)
+    {
+      double avg_ik_time = total_ik_generation_time/points_solved;
+      ROS_WARN_NAMED(LOGNAME, "IK average time taken %f", avg_ik_time);
+    }
+  }
 
   return percentage_solved;
 }

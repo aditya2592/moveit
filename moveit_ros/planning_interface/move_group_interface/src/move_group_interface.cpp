@@ -890,7 +890,7 @@ public:
   {
     moveit_msgs::GetCartesianPath::Request req;
     moveit_msgs::GetCartesianPath::Response res;
-    ROS_WARN_NAMED(LOGNAME, "Calling computeCartesianPath service with spline_trajectory %d", spline_trajectory);
+    ROS_INFO_NAMED(LOGNAME, "Calling computeCartesianPath service with spline_trajectory %d", spline_trajectory);
 
     if (considered_start_state_)
       moveit::core::robotStateToRobotStateMsg(*considered_start_state_, req.start_state);
@@ -1581,7 +1581,6 @@ double MoveGroupInterface::computeCartesianPath(const std::vector<geometry_msgs:
                                                 bool spline_trajectory,
                                                 moveit_msgs::MoveItErrorCodes* error_code)
 {
-  ROS_WARN_NAMED(LOGNAME, "Calling computeCartesianPath in MoveGroupInterfaceImpl spline trajectory %d", spline_trajectory);
   if (error_code)
   {
     return impl_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, path_constraints,

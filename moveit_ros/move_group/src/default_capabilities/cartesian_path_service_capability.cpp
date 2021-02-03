@@ -148,9 +148,15 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
                          (unsigned int)waypoints.size(), link_name.c_str(), req.max_step, req.jump_threshold,
                          global_frame ? "global" : "link");
           std::vector<moveit::core::RobotStatePtr> traj;
+
+          ros::Time generation_begin = ros::Time::now();
           res.fraction = moveit::core::CartesianInterpolator::computeCartesianPath(
               &start_state, jmg, traj, start_state.getLinkModel(link_name), waypoints, global_frame,
               moveit::core::MaxEEFStep(req.max_step), moveit::core::JumpThreshold(req.jump_threshold), req.spline_trajectory, constraint_fn);
+          
+          double duration_s = (ros::Time::now() - generation_begin).toSec();
+          ROS_WARN_NAMED(getName(), "Compute cartesian path took %lf seconds", duration_s);
+
           moveit::core::robotStateToRobotStateMsg(start_state, res.start_state);
 
           robot_trajectory::RobotTrajectory rt(context_->planning_scene_monitor_->getRobotModel(), req.group_name);
@@ -160,6 +166,7 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
           // time trajectory
           // \todo optionally compute timing to move the eef with constant speed
 
+          generation_begin = ros::Time::now();
           trajectory_processing::IterativeParabolicTimeParameterization time_param;
           if (req.trajectory_max_velocity_scaling_factor.size() > 0 && 
               req.trajectory_max_acceleration_scaling_factor.size() > 0 && 
@@ -186,6 +193,8 @@ bool MoveGroupCartesianPathService::computeService(moveit_msgs::GetCartesianPath
             time_param.computeTimeStamps(rt, req.max_velocity_scaling_factor, req.max_acceleration_scaling_factor);
           }
 
+          duration_s = (ros::Time::now() - generation_begin).toSec();
+          ROS_WARN_NAMED(getName(), "Time parameterization of path took %lf seconds", duration_s);
           rt.getRobotTrajectoryMsg(res.solution);
           ROS_WARN_NAMED(getName(), "Computed Cartesian path with %u points (followed %lf%% of requested trajectory)",
                          (unsigned int)traj.size(), res.fraction * 100.0);
